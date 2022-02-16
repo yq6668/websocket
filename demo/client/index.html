@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        p {
+            margin: 0;
+        }
+
+        #content {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>聊天室</h1>
+    <div id="content" name="name" style="overflow-y: scroll; width: 400px; height: 300px; border: solid 1px #000"></div>
+    <br />
+    <div>
+        <input type="text" id="mg" style="width: 200px;">
+    </div>
+    <button id="submit">提交</button>
+    <select id="sel">
+        <option value="">群发</option>
+        <option value="小明">小明</option>
+        <option value="小红">小红</option>
+        <option value="小绿">小绿</option>
+    </select>
+    <p></p>
+    <button id="off">下线</button><span style="color: red;display: none;">您已经下线</span>
+    <script>
+        var mg = document.querySelector("#mg");
+        var sel = document.getElementById("sel");
+        var a = Math.floor(Math.random() * 3);
+        b = ["小明", "小红", "小绿"];
+        const ws = new WebSocket('ws://localhost:8000')//连接到客户端
+        var msg2 = {};
+        msg2.name = b[a];
+        //上线
+        ws.onopen = () => {
+            msg2.value = "上线啦"
+            ws.send(JSON.stringify(msg2))
+        }
+        //收到信息
+        ws.onmessage = (msg) => {
+            const content = document.getElementById('content');
+            s = JSON.parse(msg.data);
+
+            if (s.name == msg2.name) {
+                content.innerHTML += '<p style="text-align:right">' + s.value + ':' + s.name + '</p>';
+            } else {
+                content.innerHTML += '<p>' + s.name + ':' + s.value + '</p>';
+            }
+        }
+        //报错
+        ws.onerror = err => {
+            console.log(err)
+        }
+
+        //关闭连接
+        ws.onclose = () => {
+            console.log("close")
+        }
+        document.querySelector('#submit').addEventListener('click', function () {
+            if (sel.value) {
+                msg2.obj = sel.value;
+            }
+            msg2.value = mg.value
+            ws.send(JSON.stringify(msg2))
+            mg.value = ''
+            msg2.obj = "";
+        })
+        document.querySelector('#off').addEventListener('click', function () {
+            ws.close();
+            document.querySelector("span").style.display = "block";
+        })
+    </script>
+</body>
+
+</html>
